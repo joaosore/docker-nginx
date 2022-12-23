@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-version:
+      docker: 18
+      nodejs: 10
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 088900854650.dkr.ecr.us-east-1.amazonaws.com
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t 088900854650.dkr.ecr.us-east-1.amazonaws.com/nginx:latest .
+      - docker tag 088900854650.dkr.ecr.us-east-1.amazonaws.com/nginx:latest 088900854650.dkr.ecr.us-east-1.amazonaws.com/nginx:latest
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push 088900854650.dkr.ecr.us-east-1.amazonaws.com/nginx:latest
+      - echo Writing image definitions file...
+      - printf '[{"name":"%s","imageUri":"%s"}]' ${S3} 088900854650.dkr.ecr.us-east-1.amazonaws.com/nginx:latest > imagedefinitions.json
+      - cat imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
